@@ -1,0 +1,10 @@
+# Easy Level 1: Simple linear path
+nb_drones: 12
+start_hub: color 1 0 [max_drones=23 color=yellow]
+hub: waypoint1 1 0 [color=blue]
+hub: waypoint2 2 0 [color=blue]
+end_hub: goal 3 0 [color=red]
+
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-goal

@@ -1,0 +1,3 @@
+
+class InvalidLine(Exception):
+    pass
