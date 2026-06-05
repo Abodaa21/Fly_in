@@ -1,13 +1,12 @@
 import re
 from typing import IO, List, Dict
 from exceptions import InvalidLine
-import sys
 
 
 class DataValidator():
     def __init__(self: "DataValidator") -> None:
         self.nb_drones = 12
-        self.zone_list: List[dict] = []
+        self.zone_list: Dict[dict] = {}
         self.connection_list: List[dict] = []
 
     def parsing_metadata_block(
@@ -67,6 +66,7 @@ class DataValidator():
         duplicate_name: Dict = dict()
         duplicate_coords: Dict = dict()
         duplicate_connections: Dict = dict()
+        hub_count: int = 0
         start_count: int = 0
         connections_names: Dict = dict()
         first_time: bool = True
@@ -89,7 +89,7 @@ class DataValidator():
                            r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
                            r"(?P<y_coord>(?:-)?\d+)(?:\s+"
                            r"(?:\[(?P<metadata_block>.*)\])?(?:#|$|\s+)"
-                           r"|#|\s+)")
+                           r"|#|\s+|$)")
                 if start_count != 0:
                     raise InvalidLine(f"Error in line {idx}:\n"
                                       "the start_hub line "
@@ -125,7 +125,7 @@ class DataValidator():
                 start_data = {"start_hub": {
                             "name": name, "coords": coords,
                             "metadata": metadata}}
-                self.zone_list.append(start_data)
+                self.zone_list.update(start_data)
 
             elif re.match("end_hub:", i):
                 pateren = (r"^end_hub:\s+"
@@ -166,13 +166,13 @@ class DataValidator():
                 end_data = {"end_hub": {
                             "name": name, "coords": coords,
                             "metadata": metadata}}
-                self.zone_list.append(end_data)
+                self.zone_list.update(end_data)
             elif re.match("hub: ", i):
                 pateren = (r"^hub:\s+"
                            r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
                            r"(?P<y_coord>(?:-)?\d+)(?:\s+"
                            r"(?:\[(?P<metadata_block>.*)\])?(?:$|\s+|#)"
-                           r"|#|/s+)")
+                           r"|#|/s+|$)")
                 search = re.search(pateren, i)
                 if search is None:
                     raise InvalidLine(f"Error in line {idx}:\n"
@@ -199,10 +199,11 @@ class DataValidator():
                 duplicate_name.update({name: idx})
                 metadata = self.parsing_metadata_block(metadata_block,
                                                        idx, "zone")
-                hub_data = {"hub": {
+                hub_count += 1
+                hub_data = {f"hub{hub_count}": {
                             "name": name, "coords": coords,
                             "metadata": metadata}}
-                self.zone_list.append(hub_data)
+                self.zone_list.update(hub_data)
             elif re.match("connection: ", i):
                 pateren = (r"^connection:\s+(?P<from>\w+)-(?P<to>\w+)"
                            r"(?:\s+(?:\[(?P<metadata_block>\w+)\])?(?:\s+|#|$)"
@@ -227,15 +228,16 @@ class DataValidator():
                 if ((start, end) in duplicate_connections or
                    (end, start) in duplicate_connections):
                     duplication_line = (duplicate_connections[(start, end)]
-                                        if (start, y) in
+                                        if (start, end) in
                                         duplicate_connections else
-                                        duplicate_connections[(y, start)])
+                                        duplicate_connections[(end, start)])
                     raise InvalidLine(f"Error: duplicate connection"
                                       f" in line {duplication_line} "
                                       f"and line {idx}")
+                if start == end:
+                    raise InvalidLine("Error: duplicate connection")
                 duplicate_connections.update({bridge: idx})
-                connection = {"connection": {
-                    "bridge": bridge, "metadata": metadata}}
+                connection = {bridge: metadata}
                 self.connection_list.append(connection)
             else:
                 raise InvalidLine(f"Error: invalid line format {idx}")
@@ -251,12 +253,3 @@ class DataValidator():
             if i not in check_list:
                 raise InvalidLine(f"Error invalid zone given '{i}' "
                                   f"in line {list_names[i]}")
-
-
-try:
-    if len(sys.argv) != 2:
-        raise Exception("invalid num of argument given in commend line")
-    with open(sys.argv[1], "r") as f:
-        DataValidator().validate_lines(f)
-except InvalidLine as e:
-    print(e)
