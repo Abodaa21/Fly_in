@@ -7,7 +7,7 @@ class DataValidator():
     def __init__(self: "DataValidator") -> None:
         self.nb_drones = 12
         self.zone_list: Dict[dict] = {}
-        self.connection_list: List[dict] = []
+        self.connection_list: Dict = {}
 
     def parsing_metadata_block(
             self: "DataValidator", string: str,
@@ -131,7 +131,7 @@ class DataValidator():
                 pateren = (r"^end_hub:\s+"
                            r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
                            r"(?P<y_coord>(?:-)?\d+)(?:\s+"
-                           r"(?:\[(?P<metadata_block>.*)\])?(?:$|\s+|#)|#|$)")
+                           r"(?:\[(?:\s+)?(?P<metadata_block>.*)(?:\s+)?\])?(?:$|\s+|#)|#|$)")
                 if end_count != 0:
                     raise InvalidLine(f"Error in line {idx}:\n"
                                       "the end_hub line "
@@ -171,7 +171,7 @@ class DataValidator():
                 pateren = (r"^hub:\s+"
                            r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
                            r"(?P<y_coord>(?:-)?\d+)(?:\s+"
-                           r"(?:\[(?P<metadata_block>.*)\])?(?:$|\s+|#)"
+                           r"(?:\[(?:\s+)?(?P<metadata_block>.*)(?:\s+)?\])?(?:$|\s+|#)"
                            r"|#|/s+|$)")
                 search = re.search(pateren, i)
                 if search is None:
@@ -206,14 +206,14 @@ class DataValidator():
                 self.zone_list.update(hub_data)
             elif re.match("connection: ", i):
                 pateren = (r"^connection:\s+(?P<from>\w+)-(?P<to>\w+)"
-                           r"(?:\s+(?:\[(?P<metadata_block>\w+)\])?(?:\s+|#|$)"
+                           r"(?:\s+(?:\[(?:\s+)?(?P<metadata_block>.*)(?:\s+)?\])?(?:\s+|#|$)"
                            r"|#|$)")
                 search = re.search(pateren, i)
                 if search is None:
                     raise InvalidLine(f"Error in line {idx}:\n"
                                       "should be like (connection): "
-                                      "zone_name1-zone_name2"
-                                      "[max_link_capacity=(num)]"
+                                      "zone_name1-zone_name2 "
+                                      "[max_link_capacity=(num)] "
                                       "(metadata optional)")
                 if search.group("metadata_block"):
                     metadata_block = search.group("metadata_block")
@@ -238,7 +238,7 @@ class DataValidator():
                     raise InvalidLine("Error: duplicate connection")
                 duplicate_connections.update({bridge: idx})
                 connection = {bridge: metadata}
-                self.connection_list.append(connection)
+                self.connection_list.update(connection)
             else:
                 raise InvalidLine(f"Error: invalid line format {idx}")
         if start_count == 0:
