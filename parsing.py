@@ -12,7 +12,7 @@ class DataValidator():
     def parsing_metadata_block(
             self: "DataValidator", string: str,
             idx: int, linetype: str) -> dict | None:
-        if linetype == "zone":
+        if linetype in ("zone", "special"):
             if len(string) == 0:
                 return {"color": "none", "max_drones": 1, "zone": "normal"}
             rules = (r"^(?!.*color=.*color=)(?!.*max_drones=.*max_drones)"
@@ -37,12 +37,13 @@ class DataValidator():
                 if color not in colors:
                     raise InvalidLine(
                         f"invalid metadata for color in line {idx}")
-
-            if not search.group("max_drones"):
+            if linetype == "special":
+                max_drones = float("inf")
+            elif not search.group("max_drones"):
                 max_drones = 1
             else:
                 max_drones = int(search.group("max_drones"))
-            if not search.group("zone"):
+            if not search.group("zone") or linetype == "special":
                 zone = "normal"
             else:
                 zone = search.group("zone")
@@ -121,7 +122,7 @@ class DataValidator():
                                       f" and line {idx}")
                 duplicate_name.update({name: idx})
                 metadata = self.parsing_metadata_block(metadata_block,
-                                                       idx, "zone")
+                                                       idx, "special")
                 start_data = {"start_hub": {
                             "name": name, "coords": coords,
                             "metadata": metadata}}
@@ -162,7 +163,7 @@ class DataValidator():
                                       f"and line {idx}")
                 duplicate_name.update({name: idx})
                 metadata = self.parsing_metadata_block(metadata_block,
-                                                       idx, "zone")
+                                                       idx, "special")
                 end_data = {"end_hub": {
                             "name": name, "coords": coords,
                             "metadata": metadata}}
