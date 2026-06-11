@@ -47,25 +47,27 @@ def struct_solution(solution: dict, start, goal, zone_data):
 if len(sys.argv) < 2:
     print("invalid number of arguments")
     exit()
-
-with open(sys.argv[1], "r") as f:
-    data = DataValidator()
-    data.validate_lines(f)
-    zone_data = create_info(data.zone_list)
-start = data.zone_list["start_hub"]["name"]
-goal = data.zone_list["end_hub"]["name"]
-# print(zone_data)
-graph = create_graph(data.connection_list)
-solution = cbs(graph, start, goal, data.zone_list, zone_data, data.nb_drones, data.connection_list)
-print(solution)
-if not solution:
-    print("NO SOULUTION")
-else:
-    s = struct_solution(solution, start, goal, zone_data)
-    print(s)
-    for lst in s.values():
-        print("")
-        for ele in lst:
-            print(f"{ele} ", end="")
+try:
+    with open(sys.argv[1], "r") as f:
+        data = DataValidator()
+        data.validate_lines(f)
+        zone_data = create_info(data.zone_list)
+    start = data.zone_list["start_hub"]["name"]
+    goal = data.zone_list["end_hub"]["name"]
+    # print(zone_data)
+    graph = create_graph(data.connection_list)
+    solution = cbs(graph, start, goal, data.zone_list, zone_data, data.nb_drones, data.connection_list)
+    # print(solution)
+    if not solution:
+        print("NO SOULUTION")
+    else:
+        s = struct_solution(solution, start, goal, zone_data)
+        print(s)
+        for lst in s.values():
+            print("")
+            for ele in lst:
+                print(f"{ele} ", end="")
+except Exception as e:
+    print(e)
 
 # print(data.connection_list)

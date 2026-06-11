@@ -14,16 +14,15 @@ def astar(graph, start, goal, zone_data, constraints, agent):
             return path + [goal]
         # if node not in graph:
         #     continue
+        # print(node)
         visited.append(node)
         count = 0
         restrict = []
         for _, neighbour in graph[node]:
             if neighbour in visited:
                 continue
-            restricted = False
-            count += 1
-            if (agent, neighbour, turn + 1) in constraints:
-                continue
+            # print("const", agent, neighbour, turn + 1)
+            new_turn = turn + 1
             new_path = path + [node]
             if zone_data[neighbour]['zone'] == 'normal':
                 new_cost = cost + 1
@@ -32,14 +31,18 @@ def astar(graph, start, goal, zone_data, constraints, agent):
             elif zone_data[neighbour]['zone'] == 'restricted':
                 new_cost = cost + 2
                 if neighbour not in restrict:
-                    restricted = True
                     restrict.append(neighbour)
+                    new_path += [neighbour]
+                    new_turn = turn + 2
             elif zone_data[neighbour]['zone'] == 'blocked':
                 continue
-            if restricted is True:
-                new_path += [neighbour]
-            heapq.heappush(open_list, (new_cost, turn + 1, neighbour, new_path))
+            count += 1
+            if (agent, neighbour, turn + 1) in constraints:
+                continue
+            heapq.heappush(open_list, (new_cost, new_turn, neighbour, new_path))
         if (agent, node, turn + 1) not in constraints and count != 0:
+            # if agent == "D2" and node == "waypoint2":
+            #     print("Hi", node)
             if zone_data[node]['zone'] == 'normal':
                 new_cost = cost + 1
             elif zone_data[node]['zone'] == 'priority':
@@ -61,19 +64,23 @@ def find_conflict(agents, zone_data, connection_list, start, goal):
         zones = copy.deepcopy(zone_data)
         connections = copy.deepcopy(connection_list)
         for i in range(len(lst_agents)):
-            # conect = defaultdict(lambda x: {x:{"links_num":float("inf")}})
             conect = {"links_num": float("inf")}
             agent = lst_agents[i]
             path_size = len(agents[agent]) - 1
             agent_loc = agents[agent][min(turn, path_size)]
-            if agent_loc == goal:
-                continue
+            # if agent_loc == goal:
+            #     continue
             if min(turn, path_size) != 0:
                 previous_loc = agents[agent][min(turn, path_size) - 1]
+            if turn > path_size:
+                continue
             if (previous_loc, agent_loc) in connections:
                 conect = connections[(previous_loc, agent_loc)]
             elif (agent_loc, previous_loc) in connections:
                 conect = connections[(agent_loc, previous_loc)]
+            # if turn == 4:
+            #     print(agent_loc, agent)
+            # print(agent_loc, previous_loc, conect["links_num"], agent)
             if previous_loc != agent_loc:
                 if zones[agent_loc]["max_drones"] < 1 or conect["links_num"] < 1:
                     return {
@@ -100,6 +107,7 @@ def find_conflict(agents, zone_data, connection_list, start, goal):
 
 def cbs(graph, start, goal, zone_list, zone_data, nb_agents, connection_list):
     path = astar(graph, start, goal, zone_data, set(), None)
+    # print(path)
     agents = {}
     if path is None:
         return []
@@ -110,11 +118,16 @@ def cbs(graph, start, goal, zone_list, zone_data, nb_agents, connection_list):
             "agents": agents}
     count = 0
     node = [(root["cost"], count, root)]
+    print(path)
     while node:
         _, _, root = heapq.heappop(node)
+        # print("Hi")
         conflict = find_conflict(root["agents"], zone_data, connection_list, start, goal)
+        # if count == 1:
+        #     print(root["agents"])
+        #     exit()
         if conflict is None:
-            print(root["constraints"])
+            # print(root["constraints"])
             return root["agents"]
         for agent in [conflict["agent_a"], conflict["agent_b"]]:
             if agent is None:

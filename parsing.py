@@ -29,7 +29,9 @@ class DataValidator():
             search = patteren.search(string)
             if not search:
                 raise InvalidLine(f"error in line {idx}:\n"
-                                  "invalid metadata structure [...]")
+                                  "     invalid metadata structure should be like\n"
+                                  "[<color=(valid color)> <zone=(can be restricted or normal or blocked or priority)>"
+                                  " <max_drones=(a positive integer number)>  <OPTIONAL>]")
             if not search.group("color"):
                 color = "none"
             else:
@@ -37,26 +39,31 @@ class DataValidator():
                 if color not in colors:
                     raise InvalidLine(
                         f"invalid metadata for color in line {idx}")
+            if search.group("max_drones") and int(search.group("max_drones")) == 0:
+                raise InvalidLine(f"error in line {idx}:\n  max_drones should be a positive integer")
+
             if linetype == "special":
                 max_drones = float("inf")
             elif not search.group("max_drones"):
                 max_drones = 1
             else:
                 max_drones = int(search.group("max_drones"))
-            if not search.group("zone") or linetype == "special":
+            if not search.group("zone"):
                 zone = "normal"
             else:
                 zone = search.group("zone")
                 if zone not in zones:
                     raise InvalidLine(
                         f"invalid metadata for zone in line {idx}")
+                if linetype == "special":
+                    zone = "normal"
             return {"color": color, "zone": zone, "max_drones": max_drones}
         if linetype == "connection":
             if len(string) == 0:
                 return {"links_num": 1}
             pattern = r"(?:\s+)?max_link_capacity=(?P<links_num>\d+)(?:\s+)?$"
             search = re.search(pattern, string)
-            if search is None:
+            if search is None or int(search.group("links_num")) == 0:
                 raise InvalidLine(
                     f"invalid metada for connection in line {idx}")
             links_num = int(search.group("links_num"))
@@ -81,7 +88,7 @@ class DataValidator():
                 search = re.search(pateren, i)
                 if search is None or int(search.group("nb_drones")) == 0:
                     raise InvalidLine(f"Error in line {idx}:\n"
-                                      "should be like (nb_drones: "
+                                      "should be like (nb_drones: <number>"
                                       "<strict_positive_integer>)")
                 first_time = False
                 self.nb_drones = int(search.group("nb_drones"))
@@ -215,7 +222,7 @@ class DataValidator():
                                       "should be like (connection): "
                                       "zone_name1-zone_name2 "
                                       "[max_link_capacity=(num)] "
-                                      "(metadata optional)")
+                                      "[OPTIONAL]")
                 if search.group("metadata_block"):
                     metadata_block = search.group("metadata_block")
                 else:
