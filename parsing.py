@@ -8,6 +8,7 @@ class DataValidator():
         self.nb_drones = 12
         self.zone_list: Dict[dict] = {}
         self.connection_list: Dict = {}
+        self.position = []
 
     def parsing_metadata_block(
             self: "DataValidator", string: str,
@@ -117,6 +118,7 @@ class DataValidator():
                 x = int(search.group("x_coord"))
                 y = int(search.group("y_coord"))
                 coords = (x, y)
+                self.position.append(coords)
                 if ((x, y)) in duplicate_coords:
                     raise InvalidLine("Error duplicate coords"
                                       f"in line {duplicate_coords[(x, y)]}"
@@ -158,6 +160,7 @@ class DataValidator():
                 x = int(search.group("x_coord"))
                 y = int(search.group("y_coord"))
                 coords = (x, y)
+                self.position.append(coords)
                 if ((x, y)) in duplicate_coords:
                     raise InvalidLine("Error duplicate coords"
                                       f"in line {duplicate_coords[(x, y)]} "
@@ -194,6 +197,7 @@ class DataValidator():
                 x = int(search.group("x_coord"))
                 y = int(search.group("y_coord"))
                 coords = (x, y)
+                self.position.append(coords)
                 if ((x, y)) in duplicate_coords:
                     raise InvalidLine(f"Error duplicate coords in line "
                                       f"{duplicate_coords[(x, y)]} "
