@@ -36,7 +36,8 @@ class Path_finder():
                 count += 1
                 if (agent, neighbour, turn + 1) in constraints:
                     continue
-                heapq.heappush(open_list, (new_cost, new_turn, neighbour, new_path))
+                heapq.heappush(
+                    open_list, (new_cost, new_turn, neighbour, new_path))
             if (agent, node, turn + 1) not in constraints and count != 0:
                 if zone_data[node]['zone'] == 'normal':
                     new_cost = cost + 1
@@ -49,7 +50,6 @@ class Path_finder():
                 new_path = path + [node]
                 heapq.heappush(open_list, (new_cost, turn + 1, node, new_path))
         return None
-
 
     def find_conflict(self, agents, zone_data, connection_list, start, goal):
         lst_agents = list(agents.keys())
@@ -94,7 +94,6 @@ class Path_finder():
                         zones[agent_loc]["max_drones"] -= 1
         return None
 
-
     def cbs(self, graph, start, goal, zone_data, nb_agents, connection_list):
         path = self.dijkstra(graph, start, goal, zone_data, set(), None)
         agents = {}
@@ -109,16 +108,19 @@ class Path_finder():
         node = [(root["cost"], count, root)]
         while node:
             _, _, root = heapq.heappop(node)
-            conflict = self.find_conflict(root["agents"], zone_data, connection_list, start, goal)
+            conflict = self.find_conflict(
+                root["agents"], zone_data, connection_list, start, goal)
             if conflict is None:
                 return root["agents"]
             for agent in [conflict["agent_a"], conflict["agent_b"]]:
                 if agent is None:
                     continue
                 new_constraint = root["constraints"].copy()
-                new_constraint.add((agent, conflict['location'], conflict['turn']))
+                new_constraint.add(
+                    (agent, conflict['location'], conflict['turn']))
                 new_agents = root["agents"].copy()
-                path = self.dijkstra(graph, start, goal, zone_data, new_constraint, agent)
+                path = self.dijkstra(
+                    graph, start, goal, zone_data, new_constraint, agent)
                 if not path:
                     continue
                 new_agents[agent] = path

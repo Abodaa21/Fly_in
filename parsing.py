@@ -14,8 +14,10 @@ class DataValidator():
             self: "DataValidator", string: str,
             idx: int, linetype: str) -> dict | None:
         if linetype in ("zone", "special"):
-            if len(string) == 0:
-                return {"color": "none", "max_drones": 1, "zone": "normal"}
+            if len(string) == 0 and linetype == "special":
+                return {"color": "white", "max_drones": float("inf"), "zone": "normal"}
+            if len(string) == 0 and linetype == "zone":
+                return {"color": "white", "max_drones": 1, "zone": "normal"}
             rules = (r"^(?!.*color=.*color=)(?!.*max_drones=.*max_drones)"
                      r"(?!.*zone=.*zone)"
                      r"(?:\s+)?((color=(?P<color>\w+)|"
@@ -30,11 +32,13 @@ class DataValidator():
             search = patteren.search(string)
             if not search:
                 raise InvalidLine(f"error in line {idx}:\n"
-                                  "     invalid metadata structure should be like\n"
-                                  "[<color=(valid color)> <zone=(can be restricted or normal or blocked or priority)>"
-                                  " <max_drones=(a positive integer number)>  <OPTIONAL>]")
+                                  "     invalid metadata structure should be" 
+                                  "like\n[<color=(valid color)> <zone=(can be "
+                                  "restricted or normal or blocked or priority"
+                                  ")> <max_drones=(a positive integer number)>"
+                                  "  <OPTIONAL>]")
             if not search.group("color"):
-                color = "none"
+                color = "while"
             else:
                 color = search.group("color")
                 if color not in colors:

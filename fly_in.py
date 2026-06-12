@@ -7,6 +7,7 @@ from display import Visualization
 
 class Fly_in:
     solution = None
+
     def create_graph(self, connections):
         cnts = defaultdict(list)
         for con1, con2 in connections.keys():
@@ -14,13 +15,11 @@ class Fly_in:
             cnts[con2].append((connections[(con1, con2)]['links_num'], con1))
         return cnts
 
-
     def create_info(self, zones):
         lst = defaultdict(dict)
         for key, value in zones.items():
             lst[value['name']].update({"zone": value['metadata']['zone'], "max_drones": value['metadata']['max_drones'], "coords": value["coords"], "color": value["metadata"]["color"]})
         return lst
-
 
     def struct_solution(self, solution: dict, start, goal, zone_data):
         if not solution:
@@ -58,14 +57,13 @@ class Fly_in:
             start = data.zone_list["start_hub"]["name"]
             goal = data.zone_list["end_hub"]["name"]
             graph = self.create_graph(data.connection_list)
-            print(zone_data)
-            path = Path_finder().cbs(graph, start, goal, zone_data, data.nb_drones, data.connection_list)
-            if path:
-                Fly_in.solution = self.struct_solution(path, start, goal, zone_data)
-            print(zone_data)
-            Visualization().display(data.position, data.zone_list, zone_data, data.connection_list)
+            solution = Path_finder().cbs(graph, start, goal, zone_data, data.nb_drones, data.connection_list)
+            if solution:
+                Fly_in.solution = self.struct_solution(solution, start, goal, zone_data)
+            Visualization().display(data.position, data.zone_list, zone_data, data.connection_list, solution)
         except Exception as e:
             print(e)
+
 
 Fly_in().main()
 # Visualization().display()
