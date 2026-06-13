@@ -26,15 +26,16 @@ class Path_finder():
                 elif zone_data[neighbour]['zone'] == 'priority':
                     new_cost = cost + 0.9
                 elif zone_data[neighbour]['zone'] == 'restricted':
-                    new_cost = cost + 2
-                    if neighbour not in restrict:
+                    new_cost = cost + 1
+                    if neighbour not in restrict and (agent, neighbour, new_turn) not in constraints:
                         restrict.append(neighbour)
                         new_path += [neighbour]
+                        new_cost = cost + 2
                         new_turn = turn + 2
                 elif zone_data[neighbour]['zone'] == 'blocked':
                     continue
                 count += 1
-                if (agent, neighbour, turn + 1) in constraints:
+                if (agent, neighbour, new_turn) in constraints:
                     continue
                 heapq.heappush(
                     open_list, (new_cost, new_turn, neighbour, new_path))
@@ -44,11 +45,13 @@ class Path_finder():
                 elif zone_data[node]['zone'] == 'priority':
                     new_cost = cost + 0.9
                 elif zone_data[node]['zone'] == 'restricted':
-                    new_cost = cost + 2
+                    new_cost = cost + 1
                 elif zone_data[node]['zone'] == 'blocked':
                     continue
                 new_path = path + [node]
                 heapq.heappush(open_list, (new_cost, turn + 1, node, new_path))
+        print(node, path, turn, count)
+
         return None
 
     def find_conflict(self, agents, zone_data, connection_list, start, goal):

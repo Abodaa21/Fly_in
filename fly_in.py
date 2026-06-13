@@ -60,7 +60,9 @@ class Fly_in:
             solution = Path_finder().cbs(graph, start, goal, zone_data, data.nb_drones, data.connection_list)
             if solution:
                 Fly_in.solution = self.struct_solution(solution, start, goal, zone_data)
-            Visualization().display(data.position, data.zone_list, zone_data, data.connection_list, solution)
+                Visualization().display(data.position, data.zone_list, zone_data, data.connection_list, solution)
+            else:
+                print("no solution been found")
         except Exception as e:
             print(e)
 

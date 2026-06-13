@@ -70,6 +70,7 @@ hub: trapB 4 2 [zone=priority]
 hub: trapC 4 3 [zone=priority]
 hub: trapD 3 3 [zone=priority]
 
+connection: fast2-trapA
 connection: trapA-trapB
 connection: trapB-trapC
 connection: trapC-trapD
