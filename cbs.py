@@ -1,7 +1,6 @@
 import heapq
 import copy
 
-
 class Path_finder():
     def dijkstra(self, graph, start, goal, zone_data, constraints, agent):
         path = []
@@ -74,6 +73,8 @@ class Path_finder():
                     conect = connections[(previous_loc, agent_loc)]
                 elif (agent_loc, previous_loc) in connections:
                     conect = connections[(agent_loc, previous_loc)]
+# here i have to do a when the previous is a start point or if the zone was waiting in his zone
+# so if i waited in my place their no need to modifie the links_num
                 if previous_loc != agent_loc:
                     if zones[agent_loc]["max_drones"] < 1 or conect["links_num"] < 1:
                         return {
@@ -85,14 +86,30 @@ class Path_finder():
                     else:
                         zones[agent_loc]["max_drones"] -= 1
                         conect["links_num"] -= 1
+# this in case of an agent is already on position so you can not constraint that position cause in case of no neighbours available an 
+# you will not found a solution
                 else:
                     if zones[agent_loc]["max_drones"] < 1 or conect["links_num"] < 1:
+                        for j in range(len(lst_agents)):
+                            if turn >= len(agents[lst_agents[j]]):
+                                continue
+                            if lst_agents[j] == agent or agents[lst_agents[j]][turn] in [start, goal]:
+                                continue
+                            if agents[lst_agents[j]][turn] == agent_loc:
+                                if agents[lst_agents[j]][turn - 1] == agent_loc:
+                                    continue
+                                return {
+                                    "agent_a": lst_agents[j],
+                                    "agent_b": None,
+                                    "location": agent_loc,
+                                    "turn": turn
+                                }
                         return {
-                            "agent_a": agent,
-                            "agent_b": None,
-                            "location": agent_loc,
-                            "turn": turn
-                        }
+                                    "agent_a": agent,
+                                    "agent_b": None,
+                                    "location": agent_loc,
+                                    "turn": turn
+                                }
                     else:
                         zones[agent_loc]["max_drones"] -= 1
         return None
@@ -133,5 +150,6 @@ class Path_finder():
                     "agents": new_agents
                 }
                 count += 1
+                print(count)
                 heapq.heappush(node, (new_root["cost"], count, new_root))
-        return []
+        return None

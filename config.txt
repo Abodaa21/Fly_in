@@ -1,123 +1,189 @@
-nb_drones: 40
+# CHALLENGER LEVEL: THE IMPOSSIBLE DREAM
+# WARNING: This map is designed to be extremely challenging and may not be solvable
+# by most algorithms. It's intended as a stress test and research challenge.
+# The goal is NOT to validate this map but to push algorithmic limits.
 
-start_hub: start 0 0 [color=green max_drones=40]
+nb_drones: 25
 
-# ===== ENTRY SPLIT =====
+# === LAYER 0: The Nightmare Begins ===
+start_hub: start 0 0 [color=green max_drones=25]
 
-hub: north_gate 1 1 [zone=priority color=gold max_drones=2]
-hub: center_gate 1 0 [max_drones=1]
-hub: south_gate 1 -1 [zone=priority color=gold max_drones=2]
+# Single-file entry gates (extreme bottleneck)
+hub: gate_hell1 2 0 [color=red max_drones=1]
+hub: gate_hell2 3 0 [color=red max_drones=1]
+hub: gate_hell3 4 0 [color=red max_drones=1]
+hub: gate_hell4 5 0 [color=red max_drones=1]
+hub: gate_hell5 6 0 [color=red max_drones=1]
 
-connection: start-north_gate [max_link_capacity=2]
-connection: start-center_gate [max_link_capacity=1]
-connection: start-south_gate [max_link_capacity=2]
+# === LAYER 1: The Maze of Despair ===
+# Multiple interconnected dead ends and loops
+hub: maze_trap_a1 2 1 [color=purple]
+hub: maze_trap_a2 3 1 [color=purple]
+hub: maze_trap_a3 4 1 [color=purple]
+hub: maze_dead_a 5 1 [color=black]
 
-# ===== FALSE FAST LANE =====
+hub: maze_trap_b1 2 -1 [color=purple]
+hub: maze_trap_b2 3 -1 [color=purple]
+hub: maze_trap_b3 4 -1 [color=purple]
+hub: maze_dead_b 5 -1 [color=black]
 
-hub: fast1 2 1 [zone=priority max_drones=2]
-hub: fast2 3 1 [zone=priority max_drones=2]
-hub: fast3 4 1 [zone=priority max_drones=1]
-hub: fast4 5 1 [zone=priority max_drones=1]
+hub: maze_loop1 2 2 [zone=restricted color=brown]
+hub: maze_loop2 3 2 [zone=restricted color=brown]
+hub: maze_loop3 4 2 [zone=restricted color=brown]
+hub: maze_loop4 5 2 [zone=restricted color=brown]
+hub: maze_loop5 6 2 [zone=restricted color=brown]
+hub: maze_loop6 6 1 [zone=restricted color=brown]
 
-connection: north_gate-fast1
-connection: fast1-fast2
-connection: fast2-fast3
-connection: fast3-fast4
+# === LAYER 2: The Capacity Nightmare ===
+hub: micro_gate1 7 0 [color=orange max_drones=1]
+hub: micro_gate2 8 0 [color=orange max_drones=1]
+hub: micro_gate3 9 0 [color=orange max_drones=1]
 
-hub: fast_choke 6 1 [max_drones=1]
-connection: fast4-fast_choke [max_link_capacity=1]
+# Overflow areas with terrible costs
+hub: overflow_hell1 7 1 [zone=restricted color=maroon max_drones=2]
+hub: overflow_hell2 8 1 [zone=restricted color=maroon max_drones=2]
+hub: overflow_hell3 9 1 [zone=restricted color=maroon max_drones=2]
+hub: overflow_hell4 7 -1 [zone=restricted color=maroon max_drones=2]
+hub: overflow_hell5 8 -1 [zone=restricted color=maroon max_drones=2]
+hub: overflow_hell6 9 -1 [zone=restricted color=maroon max_drones=2]
 
-# ===== RESTRICTED MAZE =====
+# === LAYER 3: The False Hope Section ===
+# Priority zones that lead to more traps
+hub: false_hope1 10 0 [zone=priority color=gold max_drones=3]
+hub: false_hope2 11 0 [zone=priority color=gold max_drones=2]
+hub: false_hope3 12 0 [zone=priority color=gold max_drones=1]
 
-hub: maze1 2 0 [zone=restricted]
-hub: maze2 3 0 [zone=restricted]
-hub: maze3 4 0 [zone=restricted]
-hub: maze4 5 0 [zone=restricted]
+# More dead ends disguised as good paths
+hub: priority_trap1 10 1 [zone=priority color=gold]
+hub: priority_trap2 11 1 [zone=priority color=gold]
+hub: priority_dead 12 1 [color=black]
 
-connection: center_gate-maze1
-connection: maze1-maze2
-connection: maze2-maze3
-connection: maze3-maze4
+hub: priority_trap3 10 -1 [zone=priority color=gold]
+hub: priority_trap4 11 -1 [zone=priority color=gold]
+hub: priority_dead2 12 -1 [color=black]
 
-# ===== LOWER CORRIDOR =====
+# === LAYER 4: The Convergence Hell ===
+# Multiple restricted paths that must merge
+hub: conv_restricted1 13 2 [zone=restricted color=darkred max_drones=1]
+hub: conv_restricted2 14 2 [zone=restricted color=darkred max_drones=1]
+hub: conv_restricted3 15 2 [zone=restricted color=darkred max_drones=1]
 
-hub: slow1 2 -1
-hub: slow2 3 -1
-hub: slow3 4 -1
-hub: slow4 5 -1
+hub: conv_restricted4 13 0 [zone=restricted color=darkred max_drones=1]
+hub: conv_restricted5 14 0 [zone=restricted color=darkred max_drones=1]
+hub: conv_restricted6 15 0 [zone=restricted color=darkred max_drones=1]
 
-connection: south_gate-slow1
-connection: slow1-slow2
-connection: slow2-slow3
-connection: slow3-slow4
+hub: conv_restricted7 13 -2 [zone=restricted color=darkred max_drones=1]
+hub: conv_restricted8 14 -2 [zone=restricted color=darkred max_drones=1]
+hub: conv_restricted9 15 -2 [zone=restricted color=darkred max_drones=1]
 
-# ===== CROSS LINKS =====
+# === LAYER 5: The Final Gauntlet of Doom ===
+hub: final_merge 16 0 [color=violet max_drones=5]
+hub: final_torture1 17 0 [color=crimson max_drones=2]
+hub: final_torture2 18 0 [color=crimson max_drones=1]
+hub: final_torture3 19 0 [color=crimson max_drones=1]
+hub: final_torture4 20 0 [color=crimson max_drones=1]
+hub: final_torture5 21 0 [color=crimson max_drones=1]
 
-connection: fast1-maze1
-connection: fast2-maze2
-connection: fast3-maze3
-connection: fast4-maze4
+# The ultimate goal
+end_hub: impossible_goal 23 0 [color=rainbow max_drones=25]
 
-connection: maze1-slow1
-connection: maze2-slow2
-connection: maze3-slow3
-connection: maze4-slow4
+# === CONNECTIONS: The Web of Suffering ===
 
-# ===== CIRCULAR TRAPS =====
+# Layer 0 connections (bottleneck hell)
+connection: start-gate_hell1 [max_link_capacity=1]
+connection: gate_hell1-gate_hell2 [max_link_capacity=1]
+connection: gate_hell2-gate_hell3 [max_link_capacity=1]
+connection: gate_hell3-gate_hell4 [max_link_capacity=1]
+connection: gate_hell4-gate_hell5 [max_link_capacity=1]
 
-hub: trapA 3 2 [zone=priority]
-hub: trapB 4 2 [zone=priority]
-hub: trapC 4 3 [zone=priority]
-hub: trapD 3 3 [zone=priority]
+# Layer 1 connections (maze of despair)
+connection: gate_hell1-maze_trap_a1
+connection: gate_hell2-maze_trap_b1
+connection: gate_hell3-maze_loop1
 
-connection: trapA-trapB
-connection: trapB-trapC
-connection: trapC-trapD
-connection: trapD-trapA
+connection: maze_trap_a1-maze_trap_a2
+connection: maze_trap_a2-maze_trap_a3
+connection: maze_trap_a3-maze_dead_a
 
-# ===== MERGE CHAOS =====
+connection: maze_trap_b1-maze_trap_b2
+connection: maze_trap_b2-maze_trap_b3
+connection: maze_trap_b3-maze_dead_b
 
-hub: merge_north 7 1 [max_drones=1]
-hub: merge_mid 7 0 [max_drones=1]
-hub: merge_south 7 -1 [max_drones=1]
+connection: maze_loop1-maze_loop2
+connection: maze_loop2-maze_loop3
+connection: maze_loop3-maze_loop4
+connection: maze_loop4-maze_loop5
+connection: maze_loop5-maze_loop6
+connection: maze_loop6-maze_loop1
 
-connection: fast_choke-merge_north
-connection: maze4-merge_mid
-connection: slow4-merge_south
+# Escape routes from maze (very limited)
+connection: maze_trap_a2-micro_gate1
+connection: maze_trap_b2-micro_gate1
+connection: maze_loop3-micro_gate2
 
-# ===== THE KILLER SECTION =====
+# Layer 2 connections (capacity nightmare)
+connection: gate_hell5-micro_gate1
+connection: micro_gate1-micro_gate2
+connection: micro_gate2-micro_gate3
 
-hub: killer1 8 1 [zone=restricted max_drones=1]
-hub: killer2 9 0 [zone=restricted max_drones=1]
-hub: killer3 10 -1 [zone=restricted max_drones=1]
+# Overflow hell connections
+connection: micro_gate1-overflow_hell1
+connection: micro_gate2-overflow_hell2
+connection: micro_gate3-overflow_hell3
+connection: micro_gate1-overflow_hell4
+connection: micro_gate2-overflow_hell5
+connection: micro_gate3-overflow_hell6
 
-connection: merge_north-killer1 [max_link_capacity=1]
-connection: merge_mid-killer1 [max_link_capacity=1]
-connection: merge_south-killer1 [max_link_capacity=1]
+connection: overflow_hell1-overflow_hell2
+connection: overflow_hell2-overflow_hell3
+connection: overflow_hell4-overflow_hell5
+connection: overflow_hell5-overflow_hell6
 
-connection: killer1-killer2 [max_link_capacity=1]
-connection: killer2-killer3 [max_link_capacity=1]
+connection: overflow_hell3-false_hope1
+connection: overflow_hell6-false_hope1
 
-# ===== FAKE SHORTCUTS =====
+# Layer 3 connections (false hope)
+connection: micro_gate3-false_hope1
+connection: false_hope1-false_hope2
+connection: false_hope2-false_hope3
 
-hub: shortcut1 8 2 [zone=priority]
-hub: shortcut2 9 2 [zone=priority]
-hub: shortcut_dead 10 2 [max_drones=1]
+# False hope traps
+connection: false_hope1-priority_trap1
+connection: false_hope2-priority_trap2
+connection: false_hope3-priority_dead
 
-connection: merge_north-shortcut1
-connection: shortcut1-shortcut2
-connection: shortcut2-shortcut_dead
+connection: false_hope1-priority_trap3
+connection: false_hope2-priority_trap4
+connection: false_hope3-priority_dead2
 
-# ===== FINAL FUNNEL =====
+connection: priority_trap1-priority_trap2
+connection: priority_trap3-priority_trap4
 
-hub: funnel1 11 0 [max_drones=1]
-hub: funnel2 12 0 [max_drones=1]
-hub: funnel3 13 0 [max_drones=1]
+# Layer 4 connections (convergence hell)
+connection: false_hope3-conv_restricted1
+connection: false_hope3-conv_restricted4
+connection: false_hope3-conv_restricted7
 
-connection: killer3-funnel1 [max_link_capacity=1]
-connection: funnel1-funnel2 [max_link_capacity=1]
-connection: funnel2-funnel3 [max_link_capacity=1]
+connection: conv_restricted1-conv_restricted2
+connection: conv_restricted2-conv_restricted3
+connection: conv_restricted4-conv_restricted5
+connection: conv_restricted5-conv_restricted6
+connection: conv_restricted7-conv_restricted8
+connection: conv_restricted8-conv_restricted9
 
-end_hub: quantum_goal 14 0 [max_drones=40]
+connection: conv_restricted3-final_merge
+connection: conv_restricted6-final_merge
+connection: conv_restricted9-final_merge
 
-connection: funnel3-quantum_goal
+# Layer 5 connections (final gauntlet)
+connection: final_merge-final_torture1
+connection: final_torture1-final_torture2
+connection: final_torture2-final_torture3
+connection: final_torture3-final_torture4
+connection: final_torture4-final_torture5
+connection: final_torture5-impossible_goal
+
+# Emergency bypass routes (extremely expensive)
+connection: overflow_hell1-conv_restricted1
+connection: overflow_hell4-conv_restricted7
+connection: priority_trap1-conv_restricted4

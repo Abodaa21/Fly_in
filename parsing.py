@@ -26,7 +26,7 @@ class DataValidator():
             colors = ["yellow", "blue", "magenta", "red", "black", "white",
                       "green", "lime", "cyan", "purple", "brown", "orange",
                       "maroon", "gold", "darkred", "violet",
-                      "crimson", "rainbow"]
+                      "crimson", "rainbow", "teal", "navy", "coral", "salmon"]
             zones = ["normal", "blocked", "priority", "restricted"]
             patteren = re.compile(rules)
             search = patteren.search(string)
@@ -38,7 +38,7 @@ class DataValidator():
                                   ")> <max_drones=(a positive integer number)>"
                                   "  <OPTIONAL>]")
             if not search.group("color"):
-                color = "while"
+                color = "yellow"
             else:
                 color = search.group("color")
                 if color not in colors:
