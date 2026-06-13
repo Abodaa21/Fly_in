@@ -1,7 +1,8 @@
 import re
-from typing import IO, List, Dict
+from typing import IO, Dict
 from exceptions import InvalidLine
 from matplotlib.colors import is_color_like
+
 
 class DataValidator():
     def __init__(self: "DataValidator") -> None:
@@ -15,20 +16,21 @@ class DataValidator():
             idx: int, linetype: str) -> dict | None:
         if linetype in ("zone", "special"):
             if len(string) == 0 and linetype == "special":
-                return {"color": "white", "max_drones": float("inf"), "zone": "normal"}
+                return {"color": "yellow", "max_drones": float("inf"),
+                        "zone": "normal"}
             if len(string) == 0 and linetype == "zone":
-                return {"color": "white", "max_drones": 1, "zone": "normal"}
+                return {"color": "yellow", "max_drones": 1, "zone": "normal"}
             rules = (r"^(?!.*color=.*color=)(?!.*max_drones=.*max_drones)"
                      r"(?!.*zone=.*zone)"
-                     r"(?:\s+)?((color=(?P<color>\w+)|"
+                     r"\s*((color=(?P<color>\w+)|"
                      r"max_drones=(?P<max_drones>\d+)|"
-                     r"zone=(?P<zone>\w+))(?:\s+)?)*$")
+                     r"zone=(?P<zone>\w+))/s*)*")
             zones = ["normal", "blocked", "priority", "restricted"]
             patteren = re.compile(rules)
             search = patteren.search(string)
             if not search:
                 raise InvalidLine(f"error in line {idx}:\n"
-                                  "     invalid metadata structure should be" 
+                                  "     invalid metadata structure should be"
                                   "like\n[<color=(valid color)> <zone=(can be "
                                   "restricted or normal or blocked or priority"
                                   ")> <max_drones=(a positive integer number)>"
@@ -42,8 +44,10 @@ class DataValidator():
                 if not is_color_like(color):
                     raise InvalidLine(
                         f"invalid metadata for color in line {idx}")
-            if search.group("max_drones") and int(search.group("max_drones")) == 0:
-                raise InvalidLine(f"error in line {idx}:\n  max_drones should be a positive integer")
+            if (search.group("max_drones") and
+                    int(search.group("max_drones")) == 0):
+                raise InvalidLine(f"error in line {idx}:\n  "
+                                  "max_drones should be a positive integer")
 
             if linetype == "special":
                 max_drones = float("inf")
@@ -82,11 +86,17 @@ class DataValidator():
         connections_names: Dict = dict()
         first_time: bool = True
         end_count: int = 0
+        first_connection = False
         for idx, i in enumerate(f):
             idx += 1
             if not i or i.isspace() or i.startswith("#"):
                 continue
             if first_time:
+                if not re.match("^nb_drones:", i):
+                    raise InvalidLine(f"Erro in line {idx}:\n"
+                                      "     nb_drones should be in first "
+                                      "line of configuration file if their's"
+                                      " no comments line")
                 pateren = r"^nb_drones:\s+(?P<nb_drones>(\d+))\s*(#|$)"
                 search = re.search(pateren, i)
                 if search is None or int(search.group("nb_drones")) == 0:
@@ -97,7 +107,7 @@ class DataValidator():
                 self.nb_drones = int(search.group("nb_drones"))
             elif re.match("start_hub:", i):
                 pateren = (r"^start_hub:\s+"
-                           r"(?P<zone_name>\w+)\s+(?P<x_coord>-?\d+)\s*"
+                           r"(?P<zone_name>[^-\n\s]+)\s+(?P<x_coord>-?\d+)\s*"
                            r"(?P<y_coord>-?\d+)\s+"
                            r"(?:\[(?P<metadata_block>.*)\])?\s*(#|$)")
                 if start_count != 0:
@@ -140,7 +150,7 @@ class DataValidator():
 
             elif re.match("end_hub:", i):
                 pateren = (r"^end_hub:\s+"
-                           r"(?P<zone_name>[^-]+)\s+(?P<x_coord>-?\d+)\s+"
+                           r"(?P<zone_name>[^-\n\s]+)\s+(?P<x_coord>-?\d+)\s+"
                            r"(?P<y_coord>-?\d+)\s*"
                            r"(?:\[(?P<metadata_block>.*)\])?\s*(#|$)")
                 if end_count != 0:
@@ -164,8 +174,8 @@ class DataValidator():
                 self.position.append(coords)
                 if ((x, y)) in duplicate_coords:
                     raise InvalidLine("Error duplicate coords:\n"
-                                      f"    in line {duplicate_coords[(x, y)]} "
-                                      f"and line {idx}")
+                                      f"    in line {duplicate_coords[(x, y)]}"
+                                      f" and line {idx}")
                 duplicate_coords.update({(x, y): idx})
                 name = search.group("zone_name")
                 if name in duplicate_name:
@@ -181,7 +191,7 @@ class DataValidator():
                 self.zone_list.update(end_data)
             elif re.match("hub: ", i):
                 pateren = (r"^hub:\s+"
-                           r"(?P<zone_name>\w+)\s+(?P<x_coord>-?\d+)\s+"
+                           r"(?P<zone_name>[^-\n\s]+)\s+(?P<x_coord>-?\d+)\s+"
                            r"(?P<y_coord>-?\d+)\s*"
                            r"(?:\[(?P<metadata_block>.*)?\])?\s*(#|$)")
                 search = re.search(pateren, i)
@@ -217,9 +227,11 @@ class DataValidator():
                             "metadata": metadata}}
                 self.zone_list.update(hub_data)
             elif re.match("connection: ", i):
-                pateren = (r"^connection:\s+(?P<from>\w+)-(?P<to>\w+)"
-                           r"(?:\s+(?:\[(?:\s+)?(?P<metadata_block>.*)(?:\s+)?\])?(?:\s+|#|$)"
-                           r"|#|$)")
+                if not first_connection:
+                    first_connection = not first_connection
+                pateren = (r"^connection:\s+"
+                           r"(?P<from>[^-\n\s]+)-(?P<to>[^-\n\s]+)"
+                           r"\s*(?:\[(?P<metadata_block>.*)\])?\s*($|#)")
                 search = re.search(pateren, i)
                 if search is None:
                     raise InvalidLine(f"Error in line {idx}:\n"
@@ -257,11 +269,16 @@ class DataValidator():
             raise InvalidLine("Error: no start_hub line been found")
         if end_count == 0:
             raise InvalidLine("Error: no end_hub line been found")
+
         self.invalid_connection_name(connections_names, duplicate_name)
+        if not first_connection:
+            raise InvalidLine("Error:   you provid no connections")
 
     def invalid_connection_name(self: "DataValidator",
                                 list_names: dict, check_list: dict) -> None:
         for i in list_names.keys():
             if i not in check_list:
+                print(check_list)
+                print(list_names)
                 raise InvalidLine(f"Error invalid zone given '{i}' "
                                   f"in line {list_names[i]}")
