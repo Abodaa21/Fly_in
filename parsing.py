@@ -1,7 +1,7 @@
 import re
 from typing import IO, List, Dict
 from exceptions import InvalidLine
-
+from matplotlib.colors import is_color_like
 
 class DataValidator():
     def __init__(self: "DataValidator") -> None:
@@ -23,10 +23,6 @@ class DataValidator():
                      r"(?:\s+)?((color=(?P<color>\w+)|"
                      r"max_drones=(?P<max_drones>\d+)|"
                      r"zone=(?P<zone>\w+))(?:\s+)?)*$")
-            colors = ["yellow", "blue", "magenta", "red", "black", "white",
-                      "green", "lime", "cyan", "purple", "brown", "orange",
-                      "maroon", "gold", "darkred", "violet",
-                      "crimson", "rainbow", "teal", "navy", "coral", "salmon"]
             zones = ["normal", "blocked", "priority", "restricted"]
             patteren = re.compile(rules)
             search = patteren.search(string)
@@ -41,7 +37,9 @@ class DataValidator():
                 color = "yellow"
             else:
                 color = search.group("color")
-                if color not in colors:
+                if color == "rainbow":
+                    color = "yellow"
+                if not is_color_like(color):
                     raise InvalidLine(
                         f"invalid metadata for color in line {idx}")
             if search.group("max_drones") and int(search.group("max_drones")) == 0:
@@ -66,7 +64,7 @@ class DataValidator():
         if linetype == "connection":
             if len(string) == 0:
                 return {"links_num": 1}
-            pattern = r"(?:\s+)?max_link_capacity=(?P<links_num>\d+)(?:\s+)?$"
+            pattern = r"\s*max_link_capacity=(?P<links_num>\d+)(?:\s+)?$"
             search = re.search(pattern, string)
             if search is None or int(search.group("links_num")) == 0:
                 raise InvalidLine(
@@ -89,20 +87,19 @@ class DataValidator():
             if not i or i.isspace() or i.startswith("#"):
                 continue
             if first_time:
-                pateren = r"^nb_drones:\s+(?P<nb_drones>(\d+))(?:\s+|$|#)"
+                pateren = r"^nb_drones:\s+(?P<nb_drones>(\d+))\s*(#|$)"
                 search = re.search(pateren, i)
                 if search is None or int(search.group("nb_drones")) == 0:
                     raise InvalidLine(f"Error in line {idx}:\n"
-                                      "should be like (nb_drones: <number>"
-                                      "<strict_positive_integer>)")
+                                      "     should be like (nb_drones:"
+                                      "  <strict_positive_integer>)")
                 first_time = False
                 self.nb_drones = int(search.group("nb_drones"))
             elif re.match("start_hub:", i):
                 pateren = (r"^start_hub:\s+"
-                           r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
-                           r"(?P<y_coord>(?:-)?\d+)(?:\s+"
-                           r"(?:\[(?P<metadata_block>.*)\])?(?:#|$|\s+)"
-                           r"|#|\s+|$)")
+                           r"(?P<zone_name>\w+)\s+(?P<x_coord>-?\d+)\s*"
+                           r"(?P<y_coord>-?\d+)\s+"
+                           r"(?:\[(?P<metadata_block>.*)\])?\s*(#|$)")
                 if start_count != 0:
                     raise InvalidLine(f"Error in line {idx}:\n"
                                       "the start_hub line "
@@ -111,7 +108,7 @@ class DataValidator():
                 search = re.search(pateren, i)
                 if search is None:
                     raise InvalidLine(f"Error in line {idx}:\n"
-                                      "should be like (start_hub: <name> "
+                                      "     should be like (start_hub: <name> "
                                       "(not space or '-')> <x> (int)"
                                       " <y> (int) [optional]\n[color=...."
                                       "max_drones=(should be an int)]")
@@ -124,14 +121,14 @@ class DataValidator():
                 coords = (x, y)
                 self.position.append(coords)
                 if ((x, y)) in duplicate_coords:
-                    raise InvalidLine("Error duplicate coords"
-                                      f"in line {duplicate_coords[(x, y)]}"
+                    raise InvalidLine("Error duplicate coords:\n"
+                                      f"    in line {duplicate_coords[(x, y)]}"
                                       f"and line {idx}")
                 duplicate_coords.update({(x, y): idx})
                 name = search.group("zone_name")
                 if name in duplicate_name:
-                    raise InvalidLine(f"Erro duplicate name {name}:"
-                                      f"in line {duplicate_name[name]}"
+                    raise InvalidLine(f"Erro duplicate name {name}:\n"
+                                      f"    in line {duplicate_name[name]}"
                                       f" and line {idx}")
                 duplicate_name.update({name: idx})
                 metadata = self.parsing_metadata_block(metadata_block,
@@ -143,19 +140,19 @@ class DataValidator():
 
             elif re.match("end_hub:", i):
                 pateren = (r"^end_hub:\s+"
-                           r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
-                           r"(?P<y_coord>(?:-)?\d+)(?:\s+"
-                           r"(?:\[(?:\s+)?(?P<metadata_block>.*)(?:\s+)?\])?(?:$|\s+|#)|#|$)")
+                           r"(?P<zone_name>[^-]+)\s+(?P<x_coord>-?\d+)\s+"
+                           r"(?P<y_coord>-?\d+)\s*"
+                           r"(?:\[(?P<metadata_block>.*)\])?\s*(#|$)")
                 if end_count != 0:
                     raise InvalidLine(f"Error in line {idx}:\n"
-                                      "the end_hub line "
+                                      "     the end_hub line "
                                       "have been duplicated")
                 search = re.search(pateren, i)
                 if search is None:
                     raise InvalidLine(f"Error in line {idx}:\n"
-                                      "should be like (end_hub: <name>"
+                                      "should be like (end_hub: <name> "
                                       "(not space or '-')> <x> (positive int)"
-                                      "<y> (positive int) [.....]")
+                                      " <y> (positive int) [.....]")
                 end_count = +1
                 if search.group("metadata_block"):
                     metadata_block = search.group("metadata_block")
@@ -166,8 +163,8 @@ class DataValidator():
                 coords = (x, y)
                 self.position.append(coords)
                 if ((x, y)) in duplicate_coords:
-                    raise InvalidLine("Error duplicate coords"
-                                      f"in line {duplicate_coords[(x, y)]} "
+                    raise InvalidLine("Error duplicate coords:\n"
+                                      f"    in line {duplicate_coords[(x, y)]} "
                                       f"and line {idx}")
                 duplicate_coords.update({(x, y): idx})
                 name = search.group("zone_name")
@@ -184,14 +181,13 @@ class DataValidator():
                 self.zone_list.update(end_data)
             elif re.match("hub: ", i):
                 pateren = (r"^hub:\s+"
-                           r"(?P<zone_name>\w+)\s+(?P<x_coord>(?:-)?\d+)\s+"
-                           r"(?P<y_coord>(?:-)?\d+)(?:\s+"
-                           r"(?:\[(?:\s+)?(?P<metadata_block>.*)(?:\s+)?\])?(?:$|\s+|#)"
-                           r"|#|/s+|$)")
+                           r"(?P<zone_name>\w+)\s+(?P<x_coord>-?\d+)\s+"
+                           r"(?P<y_coord>-?\d+)\s*"
+                           r"(?:\[(?P<metadata_block>.*)?\])?\s*(#|$)")
                 search = re.search(pateren, i)
                 if search is None:
                     raise InvalidLine(f"Error in line {idx}:\n"
-                                      "should be like (hub: <name>"
+                                      "\tshould be like (hub: <name>"
                                       "(not space or '-')> <x> (positive int)"
                                       "<y> (positive int) [.....]")
                 if search.group("metadata_block"):

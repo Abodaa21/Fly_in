@@ -39,11 +39,14 @@ class Visualization:
         restricted = []
         first_time = 0
         screaming_sound = True
+        pause = True
         while running:
             for event in pygame.event.get():
-                if event == pygame.QUIT:
+                if event.type == pygame.QUIT:
                     running = False
-            
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        pause = not pause
             current_time = pygame.time.get_ticks()
             if not first_time and current_time - start_time > delay :
                 bananini_sound.play()
@@ -93,7 +96,8 @@ class Visualization:
                     tum_tum_sound.stop()
                     sound.play(1)
                     screaming_sound = False
-            turn += 1
+            if not pause: 
+                turn += 1
 
             pygame.time.delay(1000)
             pygame.display.update()
