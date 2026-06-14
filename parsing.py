@@ -41,7 +41,7 @@ class DataValidator():
                 color = search.group("color")
                 if color == "rainbow":
                     color = "yellow"
-                if not is_color_like(color):
+                if not is_color_like(color)
                     raise InvalidLine(
                         f"invalid metadata for color in line {idx}")
             if (search.group("max_drones") and
