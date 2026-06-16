@@ -5,17 +5,18 @@ import copy
 class Path_finder():
     def dijkstra(self, graph, start, goal, zone_data, constraints, agent):
         path = []
-        visited = []
+        visited = set()
         open_list = [(0, 0, start, path)]
         if goal not in graph:
             return []
+        void = 0 #this is been use to avoid cruch in heap if cost and turn been e ual then comparison goes to node
         while open_list:
             cost, turn, node, path = heapq.heappop(open_list)
             if node == goal:
                 return path + [goal]
-            visited.append(node)
+            visited.add(node)
             count = 0
-            restrict = []
+            restrict = set()
             for _, neighbour in graph[node]:
                 if neighbour in visited:
                     continue
@@ -29,7 +30,7 @@ class Path_finder():
                     new_cost = cost + 1
                     if (neighbour not in restrict and
                        (agent, neighbour, new_turn) not in constraints):
-                        restrict.append(neighbour)
+                        restrict.add(neighbour)
                         new_path += [neighbour]
                         new_cost = cost + 2
                         new_turn = turn + 2
@@ -41,17 +42,8 @@ class Path_finder():
                 heapq.heappush(
                     open_list, (new_cost, new_turn, neighbour, new_path))
             if (agent, node, turn + 1) not in constraints and count != 0:
-                if zone_data[node]['zone'] == 'normal':
-                    new_cost = cost + 1
-                elif zone_data[node]['zone'] == 'priority':
-                    new_cost = cost + 0.9
-                elif zone_data[node]['zone'] == 'restricted':
-                    new_cost = cost + 1
-                elif zone_data[node]['zone'] == 'blocked':
-                    continue
                 new_path = path + [node]
-                heapq.heappush(open_list, (new_cost, turn + 1, node, new_path))
-        print(node, path, turn, count)
+                heapq.heappush(open_list, (cost + 1, turn + 1, node, new_path))
 
         return None
 
