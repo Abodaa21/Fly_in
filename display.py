@@ -58,7 +58,7 @@ class Visualization:
                 tum_tum_sound.play()
                 start_time = 0
                 first_time = 3
-            surface.fill((0, 0, 0))
+            surface.fill("black")
             surface.blit(background3, (1300, 0))
             surface.blit(background2, (-100, 0))
             surface.blit(background, (0, 0))
