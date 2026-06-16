@@ -1,6 +1,7 @@
 import pygame
 from parsing import DataValidator
 
+
 class Visualization:
     def display(self, coords, zone_list, zone_data, connnect_list, solution):
         min_x = min(coords, key=lambda x: x[0])[0]
@@ -48,7 +49,8 @@ class Visualization:
                     if event.key == pygame.K_SPACE:
                         pause = not pause
             current_time = pygame.time.get_ticks()
-            if not first_time and current_time - start_time > delay :
+            if (not first_time and
+               current_time - start_time > delay):
                 bananini_sound.play()
                 first_time = 1
             elif first_time == 1 and current_time - start_time > delay_1:

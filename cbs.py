@@ -1,10 +1,11 @@
 import heapq
 import copy
 
+
 class Path_finder():
     def dijkstra(self, graph, start, goal, zone_data, constraints, agent):
         path = []
-        visited = []
+        visited = set()
         open_list = [(0, 0, start, path)]
         if goal not in graph:
             return []
@@ -12,9 +13,9 @@ class Path_finder():
             cost, turn, node, path = heapq.heappop(open_list)
             if node == goal:
                 return path + [goal]
-            visited.append(node)
+            visited.add(node)
             count = 0
-            restrict = []
+            restrict = set()
             for _, neighbour in graph[node]:
                 if neighbour in visited:
                     continue
@@ -26,8 +27,9 @@ class Path_finder():
                     new_cost = cost + 0.9
                 elif zone_data[neighbour]['zone'] == 'restricted':
                     new_cost = cost + 1
-                    if neighbour not in restrict and (agent, neighbour, new_turn) not in constraints:
-                        restrict.append(neighbour)
+                    if (neighbour not in restrict and
+                       (agent, neighbour, new_turn) not in constraints):
+                        restrict.add(neighbour)
                         new_path += [neighbour]
                         new_cost = cost + 2
                         new_turn = turn + 2
@@ -39,17 +41,8 @@ class Path_finder():
                 heapq.heappush(
                     open_list, (new_cost, new_turn, neighbour, new_path))
             if (agent, node, turn + 1) not in constraints and count != 0:
-                if zone_data[node]['zone'] == 'normal':
-                    new_cost = cost + 1
-                elif zone_data[node]['zone'] == 'priority':
-                    new_cost = cost + 0.9
-                elif zone_data[node]['zone'] == 'restricted':
-                    new_cost = cost + 1
-                elif zone_data[node]['zone'] == 'blocked':
-                    continue
                 new_path = path + [node]
-                heapq.heappush(open_list, (new_cost, turn + 1, node, new_path))
-        print(node, path, turn, count)
+                heapq.heappush(open_list, (cost + 1, turn + 1, node, new_path))
 
         return None
 
@@ -73,10 +66,12 @@ class Path_finder():
                     conect = connections[(previous_loc, agent_loc)]
                 elif (agent_loc, previous_loc) in connections:
                     conect = connections[(agent_loc, previous_loc)]
-# here i have to do a when the previous is a start point or if the zone was waiting in his zone
+# here i have to do a when the previous is a start point
+#  or if the zone was waiting in his zone
 # so if i waited in my place their no need to modifie the links_num
                 if previous_loc != agent_loc:
-                    if zones[agent_loc]["max_drones"] < 1 or conect["links_num"] < 1:
+                    if (zones[agent_loc]["max_drones"] < 1 or
+                       conect["links_num"] < 1):
                         return {
                             "agent_a": agent,
                             "agent_b": None,
@@ -86,17 +81,22 @@ class Path_finder():
                     else:
                         zones[agent_loc]["max_drones"] -= 1
                         conect["links_num"] -= 1
-# this in case of an agent is already on position so you can not constraint that position cause in case of no neighbours available an 
+# this in case of an agent is already on position so
+# you can not constraint that position
+#  cause in case of no neighbours available an
 # you will not found a solution
                 else:
-                    if zones[agent_loc]["max_drones"] < 1 or conect["links_num"] < 1:
+                    if (zones[agent_loc]["max_drones"] < 1 or
+                       conect["links_num"] < 1):
                         for j in range(len(lst_agents)):
                             if turn >= len(agents[lst_agents[j]]):
                                 continue
-                            if lst_agents[j] == agent or agents[lst_agents[j]][turn] in [start, goal]:
+                            if (lst_agents[j] == agent or
+                               agents[lst_agents[j]][turn] in [start, goal]):
                                 continue
                             if agents[lst_agents[j]][turn] == agent_loc:
-                                if agents[lst_agents[j]][turn - 1] == agent_loc:
+                                if (
+                                 agents[lst_agents[j]][turn - 1] == agent_loc):
                                     continue
                                 return {
                                     "agent_a": lst_agents[j],
@@ -150,6 +150,5 @@ class Path_finder():
                     "agents": new_agents
                 }
                 count += 1
-                print(count)
                 heapq.heappush(node, (new_root["cost"], count, new_root))
         return None

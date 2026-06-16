@@ -18,7 +18,11 @@ class Fly_in:
     def create_info(self, zones):
         lst = defaultdict(dict)
         for key, value in zones.items():
-            lst[value['name']].update({"zone": value['metadata']['zone'], "max_drones": value['metadata']['max_drones'], "coords": value["coords"], "color": value["metadata"]["color"]})
+            lst[value['name']].update(
+                {"zone": value['metadata']['zone'],
+                 "max_drones": value['metadata']['max_drones'],
+                 "coords": value["coords"],
+                 "color": value["metadata"]["color"]})
         return lst
 
     def struct_solution(self, solution: dict, start, goal, zone_data):
@@ -57,10 +61,15 @@ class Fly_in:
             start = data.zone_list["start_hub"]["name"]
             goal = data.zone_list["end_hub"]["name"]
             graph = self.create_graph(data.connection_list)
-            solution = Path_finder().cbs(graph, start, goal, zone_data, data.nb_drones, data.connection_list)
+            solution = Path_finder().cbs(graph, start, goal, zone_data,
+                                         data.nb_drones, data.connection_list)
             if solution:
-                Fly_in.solution = self.struct_solution(solution, start, goal, zone_data)
-                Visualization().display(data.position, data.zone_list, zone_data, data.connection_list, solution)
+                Fly_in.solution = self.struct_solution(
+                    solution, start, goal, zone_data)
+                Visualization().display(
+                    data.position, data.zone_list, zone_data,
+                    data.connection_list, solution)
+
             else:
                 print("no solution been found")
         except Exception as e:
