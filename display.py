@@ -1,4 +1,6 @@
-import pygame
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+import pygame  # noqa: E402
 
 
 class Visualization:
@@ -33,6 +35,7 @@ class Visualization:
         min_y = min(coords, key=lambda x: x[1])[1]
         max_y = max(coords, key=lambda x: x[1])[1]
         pygame.init()
+
         pygame.mixer.init()
 
         tum_tum_sound = pygame.mixer.Sound("sounds/tum_tum.mp3")

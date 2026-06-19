@@ -110,7 +110,9 @@ class DataValidator():
             search = re.search(pattern, string)
             if search is None or int(search.group("links_num")) == 0:
                 raise InvalidLine(
-                    f"  invalid metadata for connection in line {idx}")
+                    f"invalid metadata for connection in line {idx}\n"
+                    "   should be like "
+                    "[max_link_capacity=<strict positive integer>]")
             links_num = int(search.group("links_num"))
             return {"links_num": links_num}
         return None
@@ -160,6 +162,9 @@ class DataValidator():
                 first_time = False
                 self.nb_drones = int(search.group("nb_drones"))
             elif re.match("start_hub:", i):
+                if first_connection:
+                    raise InvalidLine(f"Error in line {idx}:\n"
+                                      "  provide hubs after connections block")
                 pateren = (r"^start_hub:\s+"
                            r"(?P<zone_name>[^-\n\s]+)\s+(?P<x_coord>-?\d+)\s*"
                            r"(?P<y_coord>-?\d+)\s+"
@@ -203,6 +208,9 @@ class DataValidator():
                 self.zone_list.update(start_data)
 
             elif re.match("end_hub:", i):
+                if first_connection:
+                    raise InvalidLine(f"Error in line {idx}:\n"
+                                      "  provide hubs after connections block")
                 pateren = (r"^end_hub:\s+"
                            r"(?P<zone_name>[^-\n\s]+)\s+(?P<x_coord>-?\d+)\s+"
                            r"(?P<y_coord>-?\d+)\s*"
@@ -244,6 +252,9 @@ class DataValidator():
                             "metadata": metadata}}
                 self.zone_list.update(end_data)
             elif re.match("hub: ", i):
+                if first_connection:
+                    raise InvalidLine(f"Error in line {idx}:\n"
+                                      "  provide hubs after connections block")
                 pateren = (r"^hub:\s+"
                            r"(?P<zone_name>[^-\n\s]+)\s+(?P<x_coord>-?\d+)\s+"
                            r"(?P<y_coord>-?\d+)\s*"
@@ -284,7 +295,7 @@ class DataValidator():
                 if not first_connection:
                     first_connection = not first_connection
                 pateren = (r"^connection:\s+"
-                           r"(?P<from>[^-\n\s]+)-(?P<to>[^-\n\s]+)"
+                           r"(?P<from>[^-\n\s#]+)-(?P<to>[^-\n\s#]+)"
                            r"\s*(?:\[(?P<metadata_block>.*)\])?\s*($|#)")
                 search = re.search(pateren, i)
                 if search is None:

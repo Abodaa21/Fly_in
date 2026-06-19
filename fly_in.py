@@ -133,8 +133,6 @@ try:
                 if solution:
                     Fly_in.solution = self.struct_solution(
                         solution, start, zone_data)
-                    print()
-                    print(Fly_in.solution)
                     for key in Fly_in.solution.keys():
                         for value in Fly_in.solution[key]:
                             print(value, end=" ")
@@ -142,9 +140,8 @@ try:
                     Visualization().display(
                         data.position, zone_data,
                         data.connection_list, solution)
-
                 else:
-                    print("no solution been found")
+                    print("NO SOLUTION")
             except Exception as e:
                 print(e)
 
