@@ -101,7 +101,7 @@ Each line is one simulation turn. Each token is `D<ID>-<zone>` (or `D<ID>-<prev_
 
 The pathfinding uses **Conflict-Based Search (CBS)**, a two-level algorithm designed for multi-agent pathfinding.
 
-**High level:** a constraint tree where each node holds a set of constraints (agent, location, turn) and the agents' current paths. CBS pops the lowest-cost node, checks for conflicts, and if found, branches into two children — each adding a new constraint to resolve the conflict.
+**High level:** a constraint tree where each node holds a set of constraints (agent, location, turn) and the agents' current paths. CBS pops the lowest-cost node, checks for conflicts, and if found, branches into two children (not in this case i go with only one child) — each adding a new constraint to resolve the conflict.
 
 **Low level:** a modified **Dijkstra** search that finds the optimal path for a single agent given its current constraints. It handles:
 - Zone type costs: normal = 1 turn, restricted = 2 turns, priority = 0.9 (preferred), blocked = skipped entirely

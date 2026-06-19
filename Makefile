@@ -10,7 +10,7 @@ debug:
 
 clean:
 	rm -rf __pycache__ */__pycache__
-	rm -rf .mypy__cache
+	rm -rf .mypy_cache
 
 lint:
 	flake8 .

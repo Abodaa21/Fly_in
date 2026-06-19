@@ -134,6 +134,7 @@ try:
                     Fly_in.solution = self.struct_solution(
                         solution, start, zone_data)
                     print()
+                    print(Fly_in.solution)
                     for key in Fly_in.solution.keys():
                         for value in Fly_in.solution[key]:
                             print(value, end=" ")
