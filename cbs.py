@@ -1,12 +1,46 @@
+from __future__ import annotations
 import heapq
 import copy
+from typing import Any
 
 
 class Path_finder():
-    def dijkstra(self, graph, start, goal, zone_data, constraints, agent):
-        path = []
+    """Pathfinding engine for multi-agent drone routing using CBS.
+
+    Provides single-agent shortest-path search via a constraint-aware
+    Dijkstra variant, conflict detection across agent paths, and a
+    Conflict-Based Search (CBS) solver that coordinates all agents.
+    """
+    def dijkstra(self: "Path_finder", graph: dict, start: str, goal: str,
+                 zone_data: dict, constraints: set,
+                 agent: str | None) -> None | list:
+        """Find the lowest-cost path from start to goal for a single agent.
+
+        Uses a priority queue (min-heap) to explore nodes by cumulative cost.
+        Zone types affect traversal cost, and (agent, location, turn) triples
+        in ``constraints`` are treated as forbidden positions.
+
+        Args:
+            graph: Adjacency dict mapping node names to lists of
+                (weight, neighbour) tuples.
+            start: Name of the source node.
+            goal: Name of the destination node.
+            zone_data: Dict mapping node names to zone metadata including
+                the ``'zone'`` type (``'normal'``, ``'priority'``,
+                ``'restricted'``, or ``'blocked'``).
+            constraints: Set of ``(agent, location, turn)`` triples that
+                the agent must avoid.
+            agent: Identifier of the agent being routed, or ``None`` when
+                called without agent-specific constraints.
+
+        Returns:
+            Ordered list of node names from start to goal (inclusive),
+            ``None`` if no path exists, or ``[]`` if the goal is not in
+            the graph.
+        """
+        path: list = []
         visited = set()
-        open_list = [(0, 0, start, path)]
+        open_list: list = [(0, 0, start, path)]
         if goal not in graph:
             return []
         while open_list:
@@ -22,16 +56,16 @@ class Path_finder():
                 new_turn = turn + 1
                 new_path = path + [node]
                 if zone_data[neighbour]['zone'] == 'normal':
-                    new_cost = cost + 1
+                    new_cost = cost + 1.0
                 elif zone_data[neighbour]['zone'] == 'priority':
                     new_cost = cost + 0.9
                 elif zone_data[neighbour]['zone'] == 'restricted':
-                    new_cost = cost + 1
+                    new_cost = cost + 1.0
                     if (neighbour not in restrict and
                        (agent, neighbour, new_turn) not in constraints):
                         restrict.add(neighbour)
                         new_path += [neighbour]
-                        new_cost = cost + 2
+                        new_cost = cost + 2.0
                         new_turn = turn + 2
                 elif zone_data[neighbour]['zone'] == 'blocked':
                     continue
@@ -46,7 +80,27 @@ class Path_finder():
 
         return None
 
-    def find_conflict(self, agents, zone_data, connection_list, start, goal):
+    def find_conflict(self: "Path_finder", agents: dict, zone_data: dict,
+                      connection_list: dict, start: str,
+                      goal: str) -> None | dict:
+        """Detect the first capacity or collision conflict across all agent
+           paths.
+        Simulates all agents moving simultaneously turn by turn. On each turn
+        it checks whether the drone count at a zone or the link capacity
+        between zones is exceeded.
+        Args:
+            agents: Dict mapping agent names to their ordered path lists.
+            zone_data: Dict mapping node names to zone metadata including
+                ``'max_drones'`` capacity.
+            connection_list: Dict mapping ``(zone_a, zone_b)`` tuples to
+                connection metadata including ``'links_num'`` capacity.
+            start: Name of the global start hub (used to exempt waiting agents)
+            goal: Name of the global end hub (used to exempt waiting agents).
+        Returns:
+            A conflict dict with keys ``'agent_a'``, ``'agent_b'``,
+            ``'location'``, and ``'turn'`` describing the first conflict
+            found, or ``None`` if all paths are conflict-free.
+        """
         lst_agents = list(agents.keys())
         max_turns = max(len(p) for p in agents.values())
         previous_loc = None
@@ -114,18 +168,41 @@ class Path_finder():
                         zones[agent_loc]["max_drones"] -= 1
         return None
 
-    def cbs(self, graph, start, goal, zone_data, nb_agents, connection_list):
+    def cbs(self: "Path_finder", graph: dict, start: str, goal: str,
+            zone_data: dict, nb_agents: int,
+            connection_list: dict) -> Any:
+        """Resolve multi-agent paths using Conflict-Based Search (CBS).
+
+        Initialises all agents on the same base path, then iteratively
+        detects conflicts and branches the search tree by adding constraints
+        to individual agents until a conflict-free solution is found.
+
+        Args:
+            graph: Adjacency dict as produced by ``Fly_in.create_graph``.
+            start: Name of the global start hub.
+            goal: Name of the global end hub.
+            zone_data: Dict mapping node names to zone metadata.
+            nb_agents: Number of drones to route simultaneously.
+            connection_list: Dict mapping ``(zone_a, zone_b)`` tuples to
+                connection metadata.
+
+        Returns:
+            Dict mapping each agent name to its conflict-free path list,
+            ``{}`` if no base path exists, or ``None`` if CBS exhausts the
+            search space without a solution.
+        """
         path = self.dijkstra(graph, start, goal, zone_data, set(), None)
-        agents = {}
+        agents: dict = {}
         if path is None:
-            return []
+            return {}
         for agent in range(1, nb_agents + 1):
             agents[f"D{agent}"] = path
-        root = {"cost": sum(len(p) for p in agents.values()),
-                "constraints": set(),
-                "agents": agents}
+        root: dict = {"cost": sum(len(p) for p in agents.values()),
+                      "constraints": set(),
+                      "agents": agents}
         count = 0
         node = [(root["cost"], count, root)]
+
         while node:
             _, _, root = heapq.heappop(node)
             conflict = self.find_conflict(
@@ -135,10 +212,10 @@ class Path_finder():
             for agent in [conflict["agent_a"], conflict["agent_b"]]:
                 if agent is None:
                     continue
-                new_constraint = root["constraints"].copy()
+                new_constraint = copy.deepcopy(root["constraints"])
                 new_constraint.add(
                     (agent, conflict['location'], conflict['turn']))
-                new_agents = root["agents"].copy()
+                new_agents = copy.deepcopy(root["agents"])
                 path = self.dijkstra(
                     graph, start, goal, zone_data, new_constraint, agent)
                 if not path:
